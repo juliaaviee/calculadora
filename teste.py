@@ -1,39 +1,41 @@
-def calcular_preco_final(preco_porta, desconto, vpl, il, rateio_vpl, icms):
+def calcular_valor_com_desconto(valor_original, desconto, icms_percentual):
     """
-    Calcula o preço final de um produto considerando:
-    - Desconto comercial aplicado ao preço da porta
-    - Custo rateado do VPL
-    - Imposto local (IL)
-    - ICMS sobre o preço bruto final
+    Aplica o desconto comercial e reaplica o ICMS.
     """
-    preco_com_desconto = preco_porta * (1 - desconto)
-    custo_vpl_rateado = vpl * rateio_vpl
-    preco_bruto = preco_com_desconto + custo_vpl_rateado + il
-    preco_final = preco_bruto / (1 - icms)
+    base_sem_imposto = valor_original / (1 + icms_percentual / 100)
+    base_com_desconto = base_sem_imposto * (1 - desconto / 100)
+    valor_final = base_com_desconto * (1 + icms_percentual / 100)
+    return valor_final
 
-    return {
-        "Preço com desconto": round(preco_com_desconto, 2),
-        "Custo VPL rateado": round(custo_vpl_rateado, 2),
-        "Preço bruto": round(preco_bruto, 2),
-        "Preço final com ICMS": round(preco_final, 2)
-    }
+def encontrar_desconto_para_valor_desejado(valor_original, valor_desejado, icms_percentual, precisao=0.01):
+    """
+    Utiliza busca binária para encontrar o desconto necessário para atingir o valor desejado.
+    """
+    inicio = 0
+    fim = 100
+    while fim - inicio > precisao:
+        meio = (inicio + fim) / 2
+        valor_calculado = calcular_valor_com_desconto(valor_original, meio, icms_percentual)
 
+        if valor_calculado > valor_desejado:
+            inicio = meio
+        else:
+            fim = meio
+    return round(meio, 2)
 
 def main():
-    print("Calculadora de Preço Final com Desconto, VPL e ICMS")
-    preco_porta = float(input("Informe o preço da porta: R$ "))
-    desconto = float(input("Informe o desconto comercial (ex: 0.05 para 5%): "))
-    vpl = float(input("Informe o valor total do VPL: R$ "))
-    il = float(input("Informe o valor do imposto local (IL): R$ "))
-    rateio_vpl = float(input("Informe o percentual de rateio do VPL (ex: 0.01 para 1%): "))
-    icms = float(input("Informe o percentual de ICMS (ex: 0.17 para 17%): "))
+    print("=== CALCULADORA DE DESCONTO NECESSÁRIO ===")
+    
+    try:
+        valor_original = float(input("Digite o valor original (com imposto): R$ ").replace(",", "."))
+        valor_desejado = float(input("Digite o valor desejado (Price + Tax): R$ ").replace(",", "."))
+        icms_percentual = float(input("Digite o percentual de ICMS (%): ").replace(",", "."))
 
-    resultado = calcular_preco_final(preco_porta, desconto, vpl, il, rateio_vpl, icms)
+        desconto_necessario = encontrar_desconto_para_valor_desejado(valor_original, valor_desejado, icms_percentual)
 
-    print("\n--- Resultado ---")
-    for chave, valor in resultado.items():
-        print(f"{chave}: R$ {valor:.2f}")
-
+        print(f"\nDesconto necessário aproximado: {desconto_necessario:.2f}%")
+    except ValueError:
+        print("Erro: Certifique-se de digitar apenas números válidos.")
 
 if __name__ == "__main__":
     main()
